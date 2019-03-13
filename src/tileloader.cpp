@@ -148,74 +148,14 @@ double TileLoader::zoomToResolution(double lat, unsigned int zoom) {
   return 156543.034 * std::cos(lat_rad) / (1 << zoom);
 }
 
-void TileLoader::finishedRequest(QNetworkReply *reply) {
-  const QNetworkRequest request = reply->request();
-
-  //  find corresponding tile
-  const std::vector<MapTile>::iterator it =
-      std::find_if(tiles_.begin(), tiles_.end(),
-                   [&](const MapTile &tile) { return tile.reply() == reply; });
-  if (it == tiles_.end()) {
-    //  removed from list already, ignore this reply
-    return;
-  }
-  MapTile &tile = *it;
-
-  if (reply->error() == QNetworkReply::NoError) {
-    //  decode an image
-    QImageReader reader(reply);
-    if (reader.canRead()) {
-      QImage image = reader.read();
-      tile.setImage(image); // wenn auskommentiert mach keinen unterschied!
-      image.save(cachedPathForTile(tile.x(), tile.y(), tile.z()), "JPEG");
-      emit receivedImage(request);
-    } else {
-      //  probably not an image
-      QString err;
-      err = "Unable to decode image at " + request.url().toString();
-      emit errorOcurred(err);
-    }
-  } else {
-    const QString err = "Failed loading " + request.url().toString() +
-                        " with code " + QString::number(reply->error());
-    emit errorOcurred(err);
-  }
-
-  checkIfLoadingComplete();
-}
-
 bool TileLoader::checkIfLoadingComplete() {
   const bool loaded =
-      std::all_of(tiles_.begin(), tiles_.end(),
+      std::all_of(my_tiles_.begin(), my_tiles_.end(),
                   [](const MapTile &tile) { return tile.hasImage(); });
   if (loaded) {
     emit finishedLoading();
   }
   return loaded;
-}
-
-QUrl TileLoader::uriForTile(int x, int y) const {
-  std::string object = object_uri_;
-  //  place {x},{y},{z} with appropriate values
-  replaceRegex(boost::regex("\\{x\\}", boost::regex::icase), object,
-               std::to_string(x));
-  replaceRegex(boost::regex("\\{y\\}", boost::regex::icase), object,
-               std::to_string(y));
-  replaceRegex(boost::regex("\\{z\\}", boost::regex::icase), object,
-               std::to_string(zoom_));
-
-  const QString qstr = QString::fromStdString(object);
-  return QUrl(qstr);
-}
-
-QString TileLoader::cachedNameForTile(int x, int y, int z) const {
-  return "x" + QString::number(x) + "_y" + QString::number(y) + "_z" +
-         QString::number(z) + ".jpg";
-}
-
-QString TileLoader::cachedPathForTile(int x, int y, int z) const {
-  return QDir::cleanPath(cache_path_ + QDir::separator() +
-                         cachedNameForTile(x, y, z));
 }
 
 void TileLoader::abort() {

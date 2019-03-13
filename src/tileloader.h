@@ -148,21 +148,10 @@ public slots:
 
 private slots:
 
-  void finishedRequest(QNetworkReply *reply);
-
 private:
 
   /// Check if loading is complete. Emit signal if appropriate.
   bool checkIfLoadingComplete();
-
-  /// URI for tile [x,y]
-  QUrl uriForTile(int x, int y) const;
-
-  /// Get name for cached tile [x,y,z]
-  QString cachedNameForTile(int x, int y, int z) const;
-
-  /// Get file path for cached tile [x,y,z].
-  QString cachedPathForTile(int x, int y, int z) const;
 
   double latitude_;
   double longitude_;
