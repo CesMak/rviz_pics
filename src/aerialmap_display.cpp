@@ -69,11 +69,6 @@ LoadImages::LoadImages()
   static unsigned int map_ids = 0;
   map_id_ = map_ids++; //  global counter of map ids
 
-  latitude_of_topic1_property_mine_= new StringProperty(
-              "Latitude of Origin: [deg]", "49.974630",
-              "Wenn ich das lösche dann abbruch!"
-              , this,SLOT(setOrigin()));
-
   alpha_property_ = new FloatProperty(
       "Alpha", 0.7, "Amount of transparency to apply to the map.", this,
       SLOT(updateAlpha()));
@@ -90,18 +85,12 @@ LoadImages::LoadImages()
   draw_under_property_->setShouldBeSaved(true);
   draw_under_ = draw_under_property_->getValue().toBool();
 
-
-  save_now_property_ =
-      new Property("Load Pics", true,
-                   "Click to load images from path",
-                   this, SLOT(saveNow()));
-  save_now_property_->setShouldBeSaved(true);
-  save_now_ = save_now_property_->getValue().toBool();
-
   //  output, resolution of the map in meters/pixel
   resolution_property_ = new FloatProperty(
       "Resolution", 0, "Resolution of the map. (Read only)", this);
   resolution_property_->setReadOnly(true);
+
+    loadImagery();
 }
 
 LoadImages::~LoadImages() {
@@ -120,12 +109,6 @@ void LoadImages::updateDrawUnder() {
   draw_under_ = draw_under_property_->getValue().toBool();
   dirty_ = true; //  force update
   ROS_INFO("Changing draw_under to %s", ((draw_under_) ? "true" : "false"));
-}
-
-void LoadImages::saveNow() 
-{
-  dispCustImg();
-  ROS_INFO("Save now pressed");
 }
 
 void LoadImages::clear() {
@@ -161,28 +144,9 @@ void LoadImages::update(float, float) {
   context_->queueRender();  // klappt auch ohne!
 }
 
-void LoadImages::setOrigin() {
- received_msg_ = true;
-loadImagery();
-dispCustImg();
-}
-
-void LoadImages::dispCustImg()
-{
-  // load the image as QImage:
- // loader_.reset();
-
-}
-
-
 void LoadImages::loadImagery() {
   //  cancel current imagery, if any
   loader_.reset();
-  
-  if (!received_msg_) {
-    //  no message received from publisher
-    return;
-  }
 
   try {
         loader_.reset(new TileLoader(this)); //hiermit hängt sich das program auf!!

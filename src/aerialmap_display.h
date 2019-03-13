@@ -67,7 +67,6 @@ protected Q_SLOTS:
   void saveNow();
 
   //Additions:
-  void setOrigin();
 
   //  slots for TileLoader messages
   void receivedImage(QNetworkRequest request);
@@ -79,7 +78,6 @@ protected:
   void navFixCallback(const sensor_msgs::NavSatFixConstPtr &msg);
 
   void loadImagery();
-  void dispCustImg();
 
   void assembleScene();
 

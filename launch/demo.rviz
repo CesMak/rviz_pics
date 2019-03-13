@@ -57,9 +57,6 @@ Visualization Manager:
       Class: rviz_plugins/LoadImages
       Draw Behind: false
       Enabled: true
-      "Latitude of Origin: [deg]": 49.974633
-      Load Pics: true
-      "Longitude of Origin: [deg]": 9.756021
       Name: LoadImages
       Value: true
   Enabled: true
@@ -87,7 +84,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 223.863678
+      Distance: 301.120117
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
@@ -102,10 +99,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.05479756
+      Pitch: 0.249797702
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.43860912
+      Yaw: 5.55861139
     Saved: ~
 Window Geometry:
   Displays:
