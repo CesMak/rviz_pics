@@ -54,23 +54,14 @@ Visualization Manager:
       Queue Size: 100
       Value: true
     - Alpha: 1
-      Blocks: 0
-      "Choose Map:": http://a.tile.openstreetmap.org/{z}/{x}/{y}.png
       Class: rviz_plugins/LoadImages
       Draw Behind: false
-      Dynamically reload: true
       Enabled: true
-      Frame Convention: XYZ -> ENU
       "Latitude of Origin: [deg]": 49.974633
+      Load Pics: true
       "Longitude of Origin: [deg]": 9.756021
       Name: LoadImages
-      Robot frame: map
-      Save MEEE: false
-      Scale_points: 1
-      Tiles Server URL: http://a.tile.openstreetmap.org/{z}/{x}/{y}.png
-      Topic: ""
       Value: true
-      Zoom: 19
   Enabled: true
   Global Options:
     Background Color: 255; 255; 255
@@ -96,7 +87,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 60.8926125
+      Distance: 223.863678
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
@@ -111,10 +102,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.509797394
+      Pitch: 0.05479756
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.13360643
+      Yaw: 5.43860912
     Saved: ~
 Window Geometry:
   Displays:

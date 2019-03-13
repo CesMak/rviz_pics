@@ -98,6 +98,8 @@ public:
                       double longitude, unsigned int zoom, unsigned int blocks,
                       QObject *parent = nullptr);
 
+explicit TileLoader(QObject *parent = nullptr);
+
   /// Start loading tiles asynchronously.
   void start();
   void addMyImage();

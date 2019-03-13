@@ -48,6 +48,26 @@ void TileLoader::MapTile::abortLoading() {
 
 bool TileLoader::MapTile::hasImage() const { return !image_.isNull(); }
 
+
+TileLoader::TileLoader(QObject *parent)
+    : QObject(parent) {
+ const std::string package_path = ros::package::getPath("rviz_pics");
+  if (package_path.empty()) {
+    throw std::runtime_error("package 'rviz_pics' not found to create storage folder");
+  }
+
+    cache_path_ = QDir::cleanPath(QString::fromStdString(package_path));
+
+latitude_ = 0.0;
+longitude_ = 0.0;
+zoom_ = 18;
+blocks_ = 1;
+center_tile_x_ = 0;
+origin_offset_x_ = 0;
+origin_offset_y_ = 0;
+center_tile_y_ = 0;
+      }
+
 TileLoader::TileLoader(const std::string &service, double latitude,
                        double longitude, unsigned int zoom, unsigned int blocks,
                        QObject *parent)
