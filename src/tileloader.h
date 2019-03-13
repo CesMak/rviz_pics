@@ -24,25 +24,15 @@ class TileLoader : public QObject {
 public:
   class MapTile {
   public:
-    MapTile(int x, int y, int z, QNetworkReply *reply = nullptr)
-        : x_(x), y_(y), z_(z), reply_(reply) {}
+    // MapTile(int x, int y, int z, QNetworkReply *reply = nullptr)
+    //     : x_(x), y_(y), z_(z), reply_(reply) {}
       
-    MapTile(int x, int y, int z, QImage & image)
-      : x_(x), y_(y), z_(z), reply_(nullptr), image_(image) {}
+    // MapTile(int x, int y, int z, QImage & image)
+    //   : x_(x), y_(y), z_(z), reply_(nullptr), image_(image) {}
 
 
     MapTile(double x, double y, double z, double qx, double qy, double qz, double qw, QImage & image)
-      : pos_x_(x), pos_y_(y), pos_z_(z), qx_(qx), qy_(qy), qz_(qz), qw_(qw), reply_(nullptr), image_(image) {}
-
-    /// X tile coordinate.
-    int x() const { return x_; }
-
-    /// Y tile coordinate.
-    int y() const { return y_; }
-      
-    /// Z tile zoom value.
-    int z() const { return z_; }
-
+      : pos_x_(x), pos_y_(y), pos_z_(z), qx_(qx), qy_(qy), qz_(qz), qw_(qw), image_(image) {}
 
     /// X tile coordinate.
     int posX() const { return pos_x_; }
@@ -65,9 +55,6 @@ public:
     /// Z tile zoom value.
     double qw() const { return qz_; }
 
-    /// Network reply.
-    const QNetworkReply *reply() const { return reply_; }
-
     /// Abort the network request for this tile, if applicable.
     void abortLoading();
 
@@ -79,10 +66,6 @@ public:
     void setImage(const QImage &image) { image_ = image; }
 
   private:
-    int x_;
-    int y_;
-    int z_;
-
     double pos_x_;
     double pos_y_;
     double pos_z_;
@@ -90,13 +73,10 @@ public:
     double qy_;
     double qz_;
     double qw_;
-    QNetworkReply *reply_;
     QImage image_;
   };
 
-  explicit TileLoader(const std::string &service, double latitude,
-                      double longitude, unsigned int zoom, unsigned int blocks,
-                      QObject *parent = nullptr);
+  explicit TileLoader(QObject *parent = nullptr);
 
   /// Start loading tiles asynchronously.
   void start();
@@ -126,9 +106,6 @@ public:
 
   /// Convert latitude and zoom level to ground resolution.
   static double zoomToResolution(double lat, unsigned int zoom);
-
-  /// Path to tiles on the server.
-  const std::string &objectURI() const { return object_uri_; }
 
   /// Current set of tiles.
   const std::vector<MapTile> &tiles() const { return tiles_; }
@@ -170,8 +147,6 @@ private:
   /// Maximum number of tiles for the zoom level
   int maxTiles() const;
 
-  double latitude_;
-  double longitude_;
   unsigned int zoom_;
   int blocks_;
   int center_tile_x_;
