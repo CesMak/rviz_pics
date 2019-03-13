@@ -58,42 +58,23 @@ public:
   ~LoadImages() override;
 
   // Overrides from Display
-  void onInitialize() override;
-  void fixedFrameChanged() override;
   void reset() override;
   void update(float, float) override;
 
 protected Q_SLOTS:
-  void updateDynamicReload();
   void updateAlpha();
-  void updateTopic();
-  void updateFrame();
   void updateDrawUnder();
   void saveNow();
-  void updateObjectURI();
-  void updateZoom();
-  void updateBlocks();
-  void updateFrameConvention();
 
   //Additions:
-  void updateObjectURI_MINE();
   void setOrigin();
-  void plotPoints1();
-  void updateScale1();
 
   //  slots for TileLoader messages
-  void initiatedRequest(QNetworkRequest request);
   void receivedImage(QNetworkRequest request);
   void finishedLoading();
   void errorOcurred(QString description);
 
 protected:
-  // overrides from Display
-  void onEnable() override;
-  void onDisable() override;
-
-  virtual void subscribe();
-  virtual void unsubscribe();
 
   void navFixCallback(const sensor_msgs::NavSatFixConstPtr &msg);
 
@@ -105,8 +86,6 @@ protected:
   void clear();
   
   void clearGeometry();
-
-  void transformAerialMap();
 
   unsigned int map_id_;
   unsigned int scene_id_;
@@ -155,10 +134,8 @@ protected:
   RosTopicProperty *topic_property_plot_points1;
   FloatProperty *scale_point1_property_;
   sensor_msgs::NavSatFix point1_;
-  void navFixCallback_points1(const sensor_msgs::NavSatFixConstPtr &msg);
   float scale_point1_; // radius of points in [m]
   ros::Publisher  points1_publish_;  // my publisher
-  virtual void initialize_publish();
 };
 
 } // namespace rviz
