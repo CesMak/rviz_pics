@@ -75,13 +75,13 @@ catkin_package(CATKIN_DEPENDS nav_msgs sensor_msgs )#message_runtime)
 
 
 set(${PROJECT_NAME}_SOURCES
-  src/aerialmap_display.cpp
+  src/loadImages.cpp
   src/tileloader.cpp
  # src/rviz_plot_markers.cpp
 )
 
 set(${PROJECT_NAME}_HEADERS
-  src/aerialmap_display.h
+  src/loadImages.h
   src/tileloader.h
 )
 

@@ -1,11 +1,11 @@
 /*
  * LoadImages.cpp
  *
- *  Copyright (c) 2014 Gaeth Cross. Apache 2 License.
+ *  Copyright (c) 2019 Markus Lamprecht BSD license.
  *
- *  This file is part of rviz_satellite.
+ *  This file is part of rviz_pics
  *
- *	Created on: 07/09/2014
+ *	Created on: 13/03/2019
  */
 
 #include <QtGlobal>
@@ -35,7 +35,7 @@
 #include "rviz/validate_floats.h"
 #include "rviz/display_context.h"
 
-#include "aerialmap_display.h"
+#include "loadImages.h"
 
 
 // this method is required!
@@ -150,8 +150,6 @@ void LoadImages::loadImagery() {
 
   try {
         loader_.reset(new TileLoader(this)); //hiermit hängt sich das program auf!!
-    // loader_.reset(new TileLoader(object_uri_, ref_fix_.latitude,
-    //                              ref_fix_.longitude, zoom_, blocks_, this));
   } catch (std::exception &e) {
     setStatus(StatusProperty::Error, "Message", QString(e.what()));
     return;
@@ -231,7 +229,9 @@ void LoadImages::assembleScene() {
       //  create an object
       const std::string obj_name = "object_" + name_suffix;
       Ogre::ManualObject *obj = scene_manager_->createManualObject(obj_name);
-      scene_node_->attachObject(obj);
+
+      Ogre::SceneNode* my_scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
+      my_scene_node_->attachObject(obj);
 
       // TODO:
       //scene_node_->setOrientation(Ogre::Quaternion::IDENTITY);
@@ -269,9 +269,13 @@ int offsety = y-height/2; // wenn null dann am linken rand!
 int offsetz = z; // höhe in m
 Ogre::Vector3 vec(width/2, 0, 0);  // width/2 so lassen! verzerrung mit z etc. einstellen.
 Ogre::Quaternion quat;
+quat.x = tile.qx();
+quat.y = tile.qy();
+quat.z = tile.qz();
+quat.w = tile.qw();
 //quat.FromAngleAxis(Ogre::Degree(90), Ogre::Vector3::UNIT_Y);  // drehen um Y klappt, um X passeiert nix um Z klappt auch nicht!
-quat.w = 0.707107;
-quat.y = 0.707107;
+// quat.w = 0.707107;
+// quat.y = 0.707107;
 //vec = quat * vec; 
 std::cout<<quat<<std::endl;
 
@@ -288,6 +292,10 @@ std::cout<<quat<<std::endl;
    obj->triangle(0,  2,  3); // alternatively use obj->quad(....)
    obj->end();
 
+  // std::cout<<"before set orientation   set to: "<<quat<<std::endl;
+   my_scene_node_->setOrientation(quat);
+  // std::cout<<"after set orientation"<<std::endl;
+
       if (draw_under_property_->getValue().toBool()) {
         //  render under everything else
         obj->setRenderQueueGroup(Ogre::RENDER_QUEUE_3);
@@ -301,7 +309,15 @@ std::cout<<quat<<std::endl;
       objects_.push_back(object);
     }  // end if tile has img
  }
-  scene_id_++;
+ //scene_node_ = my_scene_node_;
+ scene_id_++;
+
+// Ogre::Quaternion quat;
+// quat.x = 1;
+// quat.y = 0;
+// quat.z = 0;
+// quat.w = 0;
+//     scene_node_->setOrientation(quat);
 }
 
 void LoadImages::receivedImage(QNetworkRequest request) {

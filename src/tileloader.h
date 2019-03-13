@@ -1,11 +1,11 @@
 /*
  * TileLoader.h
  *
- *  Copyright (c) 2014 Gaeth Cross. Apache 2 License.
+ *  Copyright (c) 2019 Markus Lamprecht BSD license.
  *
- *  This file is part of rviz_satellite.
+ *  This file is part of rviz_pics
  *
- *	Created on: 07/09/2014
+ *	Created on: 13/03/2019
  */
 
 #ifndef TILELOADER_H
@@ -24,47 +24,29 @@ class TileLoader : public QObject {
 public:
   class MapTile {
   public:
-
-
     MapTile(double x, double y, double z, double qx, double qy, double qz, double qw, QImage & image)
-      : pos_x_(x), pos_y_(y), pos_z_(z), qx_(qx), qy_(qy), qz_(qz), qw_(qw), reply_(nullptr), image_(image) {}
+      : pos_x_(x), pos_y_(y), pos_z_(z), qx_(qx), qy_(qy), qz_(qz), qw_(qw), image_(image) {}
 
-    /// X tile coordinate.
-    int x() const { return x_; }
-
-    /// Y tile coordinate.
-    int y() const { return y_; }
-      
-    /// Z tile zoom value.
-    int z() const { return z_; }
-
-
-    /// X tile coordinate.
+    /// X position of tile
     int posX() const { return pos_x_; }
 
-    /// Y tile coordinate.
+    /// Y 
     int posY() const { return pos_y_; }
       
-    /// Z tile zoom value.
+    /// Z 
     int posZ() const { return pos_z_; }
 
-    /// X tile coordinate.
+    /// quaternion x 
     double qx() const { return qx_; }
 
-    /// Y tile coordinate.
+    /// quaternion
     double qy() const { return qy_; }
       
-    /// Z tile zoom value.
+    /// quaternion
     double qz() const { return qz_; }
 
-    /// Z tile zoom value.
+    /// quaternion
     double qw() const { return qz_; }
-
-    /// Network reply.
-    const QNetworkReply *reply() const { return reply_; }
-
-    /// Abort the network request for this tile, if applicable.
-    void abortLoading();
 
     /// Has a tile successfully loaded?
     bool hasImage() const;
@@ -74,10 +56,6 @@ public:
     void setImage(const QImage &image) { image_ = image; }
 
   private:
-    int x_;
-    int y_;
-    int z_;
-
     double pos_x_;
     double pos_y_;
     double pos_z_;
@@ -85,13 +63,8 @@ public:
     double qy_;
     double qz_;
     double qw_;
-    QNetworkReply *reply_;
     QImage image_;
   };
-
-  explicit TileLoader(const std::string &service, double latitude,
-                      double longitude, unsigned int zoom, unsigned int blocks,
-                      QObject *parent = nullptr);
 
 explicit TileLoader(QObject *parent = nullptr);
 
@@ -102,33 +75,6 @@ explicit TileLoader(QObject *parent = nullptr);
   /// Meters/pixel of the tiles.
   double resolution() const;
 
-  /// X index of central tile.
-  int centerTileX() const { return center_tile_x_; }
-
-  /// Y index of central tile.
-  int centerTileY() const { return center_tile_y_; }
-
-  /// Fraction of a tile to offset the origin (X).
-  double originOffsetX() const { return origin_offset_x_; }
-
-  /// Fraction of a tile to offset the origin (Y).
-  double originOffsetY() const { return origin_offset_y_; }
-
-  /// Test if (lat,lon) falls inside centre tile.
-  bool insideCentreTile(double lat, double lon) const;
-
-  /// Convert lat/lon to a tile index with mercator projection.
-  static void latLonToTileCoords(double lat, double lon, unsigned int zoom,
-                                 double &x, double &y);
-
-  /// Convert latitude and zoom level to ground resolution.
-  static double zoomToResolution(double lat, unsigned int zoom);
-
-  /// Path to tiles on the server.
-  const std::string &objectURI() const { return object_uri_; }
-
-  /// Current set of tiles.
-  const std::vector<MapTile> &tiles() const { return tiles_; }
   const std::vector<MapTile> &Mytiles() const { return my_tiles_; }
 
   /// Cancel all current requests.
@@ -153,21 +99,6 @@ private:
   /// Check if loading is complete. Emit signal if appropriate.
   bool checkIfLoadingComplete();
 
-  double latitude_;
-  double longitude_;
-  unsigned int zoom_;
-  int blocks_;
-  int center_tile_x_;
-  int center_tile_y_;
-  double origin_offset_x_;
-  double origin_offset_y_;
-
-  std::shared_ptr<QNetworkAccessManager> qnam_;
-  QString cache_path_;
-
-  std::string object_uri_;
-
-  std::vector<MapTile> tiles_;
   std::vector<MapTile> my_tiles_;
 };
 

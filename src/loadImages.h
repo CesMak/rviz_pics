@@ -1,15 +1,15 @@
 /*
  * LoadImages.h
  *
- *  Copyright (c) 2014 Gaeth Cross. Apache 2 License.
+ *  Copyright (c) 2019 Markus Lamprecht BSD license.
  *
- *  This file is part of rviz_satellite.
+ *  This file is part of rviz_pics
  *
- *	Created on: 07/09/2014
+ *	Created on: 13/03/2019
  */
 
-#ifndef AERIAL_MAP_DISPLAY_H
-#define AERIAL_MAP_DISPLAY_H
+#ifndef LOAD_IMAGES_H
+#define LOAD_IMAGES_H
 
 // NOTE: workaround for issue: https://bugreports.qt.io/browse/QTBUG-22829
 #ifndef Q_MOC_RUN
@@ -42,10 +42,8 @@ namespace rviz {
 class FloatProperty;
 class IntProperty;
 class Property;
-class RosTopicProperty;
 class StringProperty;
 class TfFrameProperty;
-class EnumProperty;
 
 /**
  * @class LoadImages
@@ -73,9 +71,6 @@ protected Q_SLOTS:
   void errorOcurred(QString description);
 
 protected:
-
-  void navFixCallback(const sensor_msgs::NavSatFixConstPtr &msg);
-
   void loadImagery();
 
   void assembleScene();
@@ -95,44 +90,19 @@ protected:
   };
   std::vector<MapObject> objects_;
 
-  ros::Subscriber coord_sub_;
-
   //  properties
-  RosTopicProperty *topic_property_;
-  TfFrameProperty *frame_property_;
-  Property *dynamic_reload_property_;
-  StringProperty *object_uri_property_;
-  IntProperty *zoom_property_;
-  IntProperty *blocks_property_;
   FloatProperty *resolution_property_;
   FloatProperty *alpha_property_;
   Property *draw_under_property_;
-  Property *save_now_property_;
-  EnumProperty * frame_convention_property_;
 
   float alpha_;
   bool draw_under_;
-  bool save_now_;
-  std::string object_uri_;
-  int zoom_;
-  int blocks_;
 
   //  tile management
   bool dirty_;
   bool received_msg_;
-  sensor_msgs::NavSatFix ref_fix_; //coordinate center.
 
   std::shared_ptr<TileLoader> loader_;
-
-  //Additions:
-  EnumProperty *object_uri_property_mine_;
-  StringProperty *longitude_of_topic1_property_mine_;
-  StringProperty *latitude_of_topic1_property_mine_;
-  RosTopicProperty *topic_property_plot_points1;
-  FloatProperty *scale_point1_property_;
-  sensor_msgs::NavSatFix point1_;
-  float scale_point1_; // radius of points in [m]
-  ros::Publisher  points1_publish_;  // my publisher
 };
 
 } // namespace rviz
