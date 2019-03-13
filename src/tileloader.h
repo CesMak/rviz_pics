@@ -24,11 +24,6 @@ class TileLoader : public QObject {
 public:
   class MapTile {
   public:
-    MapTile(int x, int y, int z, QNetworkReply *reply = nullptr)
-        : x_(x), y_(y), z_(z), reply_(reply) {}
-      
-    MapTile(int x, int y, int z, QImage & image)
-      : x_(x), y_(y), z_(z), reply_(nullptr), image_(image) {}
 
 
     MapTile(double x, double y, double z, double qx, double qy, double qz, double qw, QImage & image)
@@ -168,9 +163,6 @@ private:
 
   /// Get file path for cached tile [x,y,z].
   QString cachedPathForTile(int x, int y, int z) const;
-
-  /// Maximum number of tiles for the zoom level
-  int maxTiles() const;
 
   double latitude_;
   double longitude_;

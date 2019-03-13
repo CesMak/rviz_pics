@@ -182,11 +182,8 @@ void LoadImages::assembleScene() {
   //  get rid of old geometry, we will re-build this
   clearGeometry();
   
-  std::cout<<"inside dispCustImg"<<std::endl<<std::endl;
  for (const TileLoader::MapTile &tile : loader_->Mytiles()) {
   if (tile.hasImage()) {
-
-    std::cout<<"inside loop"<<std::endl;
 
     const int w = tile.image().width();
     const int h = tile.image().height();
@@ -287,7 +284,6 @@ std::cout<<quat<<std::endl;
   obj->position(vec.x+offsetx, offsety, vec.z+offsetz);
   obj->textureCoord(1, 1);
 
-   int offset =0;
    obj->triangle(0,  3,  1); // dreiecke in sich verdreht wenn ohne offset!
    obj->triangle(0,  2,  3); // alternatively use obj->quad(....)
    obj->end();

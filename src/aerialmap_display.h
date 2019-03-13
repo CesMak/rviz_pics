@@ -64,7 +64,6 @@ public:
 protected Q_SLOTS:
   void updateAlpha();
   void updateDrawUnder();
-  void saveNow();
 
   //Additions:
 
