@@ -78,11 +78,36 @@ LoadImages::LoadImages()
     : Display(), map_id_(0), scene_id_(0), dirty_(false),
       received_msg_(false) {
 
-        std::cout<<"inside load constructor images   "<<std::endl;
-
   static unsigned int map_ids = 0;
   map_id_ = map_ids++; //  global counter of map ids
 
+  topic_property_ = new RosTopicProperty(
+      "Topic", "name_points1", QString::fromStdString(
+                       ros::message_traits::datatype<sensor_msgs::NavSatFix>()),
+      "nav_msgs::Odometry topic to subscribe to.", this, SLOT(updateTopic()));
+
+  latitude_of_topic1_property_mine_= new StringProperty(
+              "Latitude of Origin: [deg]", "49.974630",
+              "This field displays the Longitude of the Start position point according to that point the origin is set! The origin is that point where the axis meet."
+              , this,SLOT(setOrigin()));
+  //latitude_of_topic1_property_mine_->setReadOnly(true);
+
+
+  // nur für topic1 :
+  longitude_of_topic1_property_mine_= new StringProperty(
+              "Longitude of Origin: [deg]", "9.756021",
+              "This field displays the Longitude of the Start position point according to that point the origin is set! The origin is that point where the axis meet"
+              , this,SLOT(setOrigin()));
+  //longitude_of_topic1_property_mine_->setReadOnly(true);
+
+  frame_property_ = new TfFrameProperty("Robot frame", "world",
+                                        "TF frame for the moving robot.", this,
+                                        nullptr, false, SLOT(updateFrame()), this);
+
+  dynamic_reload_property_ =
+      new Property("Dynamically reload", true,
+                   "Reload as robot moves. Frame option must be set.",
+                   this, SLOT(updateDynamicReload()));
 
   alpha_property_ = new FloatProperty(
       "Alpha", 0.7, "Amount of transparency to apply to the map.", this,
@@ -108,6 +133,53 @@ LoadImages::LoadImages()
   save_now_property_->setShouldBeSaved(true);
   save_now_ = save_now_property_->getValue().toBool();
 
+
+
+  //  output, resolution of the map in meters/pixel
+  resolution_property_ = new FloatProperty(
+      "Resolution", 0, "Resolution of the map. (Read only)", this);
+  resolution_property_->setReadOnly(true);
+
+  //  properties for map
+    object_uri_property_ = new StringProperty(
+                "Tiles Server URL", "http://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                "URL from which to retrieve map tiles. Possibilities: ", this, SLOT(updateObjectURI()));
+
+  object_uri_property_->setShouldBeSaved(true);
+  object_uri_ = object_uri_property_->getStdString();
+
+  object_uri_property_mine_ =  new EnumProperty("Choose Map:", "http://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                                                   "Choose Map from List",
+                                                   this, SLOT(updateObjectURI_MINE()));
+      object_uri_property_mine_->addOptionStd("http://a.tile.openstreetmap.org/{z}/{x}/{y}.png");
+      object_uri_property_mine_->addOptionStd("http://mt0.google.com/vt/lyrs=s@0&hl=en&x={x}&y={y}&z={z}");
+      object_uri_property_mine_->addOptionStd("http://korona.geog.uni-heidelberg.de/tiles/hybrid/x={x}&y={y}&z={z}");
+      object_uri_property_mine_->addOptionStd("http://korona.geog.uni-heidelberg.de/tiles/roads/x={x}&y={y}&z={z}");
+      object_uri_property_mine_->addOptionStd("http://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png");
+      object_uri_property_mine_->addOptionStd("http://a.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png");
+     // object_uri_property_mine_->addOptionStd("http://otile1.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.jpg"); (not working)
+
+      object_uri_property_mine_->setShouldBeSaved(true);
+      object_uri_ = object_uri_property_mine_->getStdString();
+
+
+  const QString zoom_desc = QString::fromStdString(
+      "Zoom level (0 - " + std::to_string(kMaxZoom) + ")");
+  zoom_property_ =
+      new IntProperty("Zoom", 16, zoom_desc, this, SLOT(updateZoom()));
+  zoom_property_->setShouldBeSaved(true);
+  zoom_property_->setMin(0);
+  zoom_property_->setMax(kMaxZoom);
+  zoom_ = zoom_property_->getInt();
+
+  const QString blocks_desc = QString::fromStdString(
+      "Adjacent blocks (0 - " + std::to_string(kMaxBlocks) + ")");
+  blocks_property_ =
+      new IntProperty("Blocks", 3, blocks_desc, this, SLOT(updateBlocks()));
+  blocks_property_->setShouldBeSaved(true);
+  blocks_property_->setMin(0);
+  blocks_property_->setMax(kMaxBlocks);
+
   frame_convention_property_ =
       new EnumProperty("Frame Convention", "XYZ -> ENU",
                        "Convention for mapping cartesian frame to the compass",
@@ -119,10 +191,18 @@ LoadImages::LoadImages()
   frame_convention_property_->addOptionStd("XYZ -> NWU",
                                            FRAME_CONVENTION_XYZ_NWU);
 
-    //  updating one triggers reload
-   // loadImagery();
 
-    std::cout<<" end of constructor"<<std::endl;
+  // topic_property_plot_points1 = new RosTopicProperty(
+  //     "Topic_Plot_points1", "", QString::fromStdString(
+  //                      ros::message_traits::datatype<sensor_msgs::NavSatFix>()),
+  //     "nav_msgs::Odometry topic to subscribe to.", this, SLOT(plotPoints1()));
+
+  scale_point1_property_ = new FloatProperty(
+      "Scale_points", 1.0, "Scale points radius of points in meter", this,
+      SLOT(updateScale1()));
+  scale_point1_ = scale_point1_property_->getValue().toFloat();
+    //  updating one triggers reload
+  updateBlocks();
 }
 
 LoadImages::~LoadImages() {
@@ -142,22 +222,22 @@ void LoadImages::onDisable() {
 }
 
 void LoadImages::subscribe() {
-  // if (!isEnabled()) {
-  //   return;
-  // }
+  if (!isEnabled()) {
+    return;
+  }
 
-  // if (!topic_property_->getTopic().isEmpty()) {
-  //   try {
-  //     ROS_INFO("Subscribing to %s", topic_property_->getTopicStd().c_str());
-  //     coord_sub_ = update_nh_.subscribe(topic_property_->getTopicStd(), 1,&LoadImages::navFixCallback_points1, this);
+  if (!topic_property_->getTopic().isEmpty()) {
+    try {
+      ROS_INFO("Subscribing to %s", topic_property_->getTopicStd().c_str());
+      coord_sub_ = update_nh_.subscribe(topic_property_->getTopicStd(), 1,&LoadImages::navFixCallback_points1, this);
 
-  //     setStatus(StatusProperty::Ok, "Topic", "OK");
-  //   }
-  //   catch (ros::Exception &e) {
-  //     setStatus(StatusProperty::Error, "Topic",
-  //               QString("Error subscribing: ") + e.what());
-  //   }
-  // }
+      setStatus(StatusProperty::Ok, "Topic", "OK");
+    }
+    catch (ros::Exception &e) {
+      setStatus(StatusProperty::Error, "Topic",
+                QString("Error subscribing: ") + e.what());
+    }
+  }
 
 }
 
@@ -198,7 +278,7 @@ void LoadImages::updateDrawUnder() {
 
 void LoadImages::saveNow() 
 {
-  //dispCustImg();
+  dispCustImg();
   ROS_INFO("Save now pressed");
 }
 
@@ -206,6 +286,7 @@ void LoadImages::updateObjectURI() {
   object_uri_ = object_uri_property_->getStdString();
   ROS_INFO("update tiles...");
   loadImagery(); //  reload all imagery
+  //dispCustImg();
 }
 
 void LoadImages::updateZoom() {
@@ -213,6 +294,7 @@ void LoadImages::updateZoom() {
   if (zoom != zoom_) {
     zoom_ = zoom;
     loadImagery();
+    //dispCustImg();
   }
 }
 
@@ -222,6 +304,7 @@ void LoadImages::updateBlocks() {
   if (blocks != blocks_) {
     blocks_ = blocks;
     loadImagery();
+   // dispCustImg();
   }
 }
 
@@ -237,10 +320,10 @@ void LoadImages::updateObjectURI_MINE() {
 }
 
 void LoadImages::updateTopic() {
-  // unsubscribe();
-  // clear();
-  // subscribe();
-  // initialize_publish();
+  unsubscribe();
+  clear();
+  subscribe();
+  initialize_publish();
 }
 
 void LoadImages::clear() {
@@ -302,51 +385,51 @@ void LoadImages::update(float, float) {
 //}
 
 void LoadImages::navFixCallback_points1(const sensor_msgs::NavSatFixConstPtr &msg) {
-  // point1_ = *msg;
-  // ROS_INFO("Plot point1 of topic %s",topic_property_->getTopicStd().c_str());
-  // ROS_INFO("Plot point1 at: %.12f, %.12f", point1_.latitude, point1_.longitude);
-  // ROS_INFO("Plot point1 with cube radius of [m] %f",scale_point1_);
+  point1_ = *msg;
+  ROS_INFO("Plot point1 of topic %s",topic_property_->getTopicStd().c_str());
+  ROS_INFO("Plot point1 at: %.12f, %.12f", point1_.latitude, point1_.longitude);
+  ROS_INFO("Plot point1 with cube radius of [m] %f",scale_point1_);
 
-  //  rviz_pics::rviz_scale points1;
-  //  points1.header.stamp = ros::Time::now();
-  //  points1.latitude=point1_.latitude;
-  //  points1.longitude=point1_.longitude;
-  //  points1.altitude=point1_.altitude;
-  //  points1.scale=scale_point1_;
-  //  points1.status=point1_.status.status;
-  //  points1.lat_center= latitude_of_topic1_property_mine_->getString().toDouble();
-  //  points1.long_center= longitude_of_topic1_property_mine_->getString().toDouble();
-  //  points1_publish_.publish(points1);
+   rviz_pics::rviz_scale points1;
+   points1.header.stamp = ros::Time::now();
+   points1.latitude=point1_.latitude;
+   points1.longitude=point1_.longitude;
+   points1.altitude=point1_.altitude;
+   points1.scale=scale_point1_;
+   points1.status=point1_.status.status;
+   points1.lat_center= latitude_of_topic1_property_mine_->getString().toDouble();
+   points1.long_center= longitude_of_topic1_property_mine_->getString().toDouble();
+   points1_publish_.publish(points1);
 }
 
 void LoadImages::initialize_publish() {
-    // if (!isEnabled()) {
-    //     return;
-    // }
+    if (!isEnabled()) {
+        return;
+    }
 
-    // if (!topic_property_->getTopic().isEmpty()) {
-    //     try {
-    //         points1_publish_ = update_nh_.advertise<rviz_pics::rviz_scale>("/points1_publish",5);
-    //     }
-    //     catch (ros::Exception &e) {
-    //         setStatus(StatusProperty::Error, "Topic",
-    //                   QString("Error publishing: ") + e.what());
-    //     }
-    // }
+    if (!topic_property_->getTopic().isEmpty()) {
+        try {
+            points1_publish_ = update_nh_.advertise<rviz_pics::rviz_scale>("/points1_publish",5);
+        }
+        catch (ros::Exception &e) {
+            setStatus(StatusProperty::Error, "Topic",
+                      QString("Error publishing: ") + e.what());
+        }
+    }
 }
 
 
 void LoadImages::setOrigin() {
 
-//  std::string latitude_s=  longitude_of_topic1_property_mine_->getStdString();
-//  QString latitude_q = latitude_of_topic1_property_mine_->getString();
-//   QString longitude_q = longitude_of_topic1_property_mine_->getString();
-//  //ref_fix_.latitude  = boost::format("%.12f") % latitude_s.c_str();
-//  double temp = latitude_q.toDouble();
-//  ROS_INFO("[%s, %s,%.12f]",latitude_s,latitude_s.c_str(),temp);
+ std::string latitude_s=  longitude_of_topic1_property_mine_->getStdString();
+ QString latitude_q = latitude_of_topic1_property_mine_->getString();
+  QString longitude_q = longitude_of_topic1_property_mine_->getString();
+ //ref_fix_.latitude  = boost::format("%.12f") % latitude_s.c_str();
+ double temp = latitude_q.toDouble();
+ ROS_INFO("[%s, %s,%.12f]",latitude_s,latitude_s.c_str(),temp);
 
-  ref_fix_.latitude  =0;
-  ref_fix_.longitude =0;
+  ref_fix_.latitude  =latitude_q.toDouble();
+  ref_fix_.longitude =longitude_q.toDouble();
 
   //ROS_INFO("string [%.12f]", str( boost::format("%.12f") % longitude_of_topic1_property_mine_->getStdString())  );
 
@@ -377,7 +460,7 @@ void LoadImages::setOrigin() {
 //// //  re-load imagery
  received_msg_ = true;
 loadImagery();
-//dispCustImg();
+dispCustImg();
 transformAerialMap();
 ////  }
 }
@@ -385,11 +468,9 @@ transformAerialMap();
 void LoadImages::dispCustImg()
 {
   // load the image as QImage:
- loader_.reset();
+ // loader_.reset();
  std::cout<<"inside dispCustImg"<<std::endl<<std::endl;
-
  for (const TileLoader::MapTile &tile : loader_->Mytiles()) {
-   std::cout<<"inside for loop"<<std::endl<<std::endl;
   if (tile.hasImage()) {
 
     std::cout<<"inside loop"<<std::endl;
@@ -406,7 +487,7 @@ void LoadImages::dispCustImg()
     std::cout<<z<<std::endl;
 
     const std::string name_suffix =
-        std::to_string(tile.posX()) + "_" + std::to_string(tile.posY()) + "_" +
+        std::to_string(tile.x()) + "_" + std::to_string(tile.y()) + "_" +
         std::to_string(map_id_) + "_" + std::to_string(scene_id_);
 
       //  one material per texture
@@ -520,176 +601,176 @@ void LoadImages::loadImagery() {
   //  cancel current imagery, if any
   loader_.reset();
   
-  // if (!received_msg_) {
-  //   //  no message received from publisher
-  //   return;
-  // }
-  // if (object_uri_.empty()) {
-  //   setStatus(StatusProperty::Error, "Message",
-  //             "Received message but object URI is not set");
-  // }
+  if (!received_msg_) {
+    //  no message received from publisher
+    return;
+  }
+  if (object_uri_.empty()) {
+    setStatus(StatusProperty::Error, "Message",
+              "Received message but object URI is not set");
+  }
 
   try {
-    loader_.reset(new TileLoader(this));
-    std::cout<<"reset loader"<<std::endl;
+    loader_.reset(new TileLoader(object_uri_, ref_fix_.latitude,
+                                 ref_fix_.longitude, zoom_, blocks_, this));
   } catch (std::exception &e) {
     setStatus(StatusProperty::Error, "Message", QString(e.what()));
     return;
   }
 
-  // QObject::connect(loader_.get(), SIGNAL(errorOcurred(QString)), this,
-  //                  SLOT(errorOcurred(QString)));
-  // QObject::connect(loader_.get(), SIGNAL(finishedLoading()), this,
-  //                  SLOT(finishedLoading()));
-  // QObject::connect(loader_.get(), SIGNAL(initiatedRequest(QNetworkRequest)), this,
-  //                  SLOT(initiatedRequest(QNetworkRequest)));
-  // QObject::connect(loader_.get(), SIGNAL(receivedImage(QNetworkRequest)), this,
-  //                  SLOT(receivedImage(QNetworkRequest)));
+  QObject::connect(loader_.get(), SIGNAL(errorOcurred(QString)), this,
+                   SLOT(errorOcurred(QString)));
+  QObject::connect(loader_.get(), SIGNAL(finishedLoading()), this,
+                   SLOT(finishedLoading()));
+  QObject::connect(loader_.get(), SIGNAL(initiatedRequest(QNetworkRequest)), this,
+                   SLOT(initiatedRequest(QNetworkRequest)));
+  QObject::connect(loader_.get(), SIGNAL(receivedImage(QNetworkRequest)), this,
+                   SLOT(receivedImage(QNetworkRequest)));
   //  start loading images
   loader_->start();
 }
 
 void LoadImages::assembleScene() {
-  // if (!dirty_) {
-  //   return; //  nothing to update
-  // }
-  // dirty_ = false;
+  if (!dirty_) {
+    return; //  nothing to update
+  }
+  dirty_ = false;
   
   if (!loader_) {
     return; //  no tiles loaded, don't do anything
   }
   
-  // //  get rid of old geometry, we will re-build this
-  // clearGeometry();
+  //  get rid of old geometry, we will re-build this
+  clearGeometry();
   
-  // //  iterate over all tiles and create an object for each of them
-  // for (const TileLoader::MapTile &tile : loader_->tiles()) {
-  //   // NOTE(gareth): We invert the y-axis so that positive y corresponds
-  //   // to north. We are in XYZ->ENU convention here.
-  //   const int w = tile.image().width();
-  //   const int h = tile.image().height();
-  //   const double tile_w = w * loader_->resolution();
-  //   const double tile_h = h * loader_->resolution();
+  //  iterate over all tiles and create an object for each of them
+  for (const TileLoader::MapTile &tile : loader_->tiles()) {
+    // NOTE(gareth): We invert the y-axis so that positive y corresponds
+    // to north. We are in XYZ->ENU convention here.
+    const int w = tile.image().width();
+    const int h = tile.image().height();
+    const double tile_w = w * loader_->resolution();
+    const double tile_h = h * loader_->resolution();
 
-  //   // Shift back such that (0, 0) corresponds to the exact latitude and
-  //   // longitude the tile loader requested.
-  //   // This is the local origin, in the frame of the map node.
-  //   const double origin_x = -loader_->originOffsetX() * tile_w;
-  //   const double origin_y = -(1 - loader_->originOffsetY()) * tile_h;
+    // Shift back such that (0, 0) corresponds to the exact latitude and
+    // longitude the tile loader requested.
+    // This is the local origin, in the frame of the map node.
+    const double origin_x = -loader_->originOffsetX() * tile_w;
+    const double origin_y = -(1 - loader_->originOffsetY()) * tile_h;
 
-  //   // determine location of this tile, flipping y in the process
-  //   const double x = (tile.x() - loader_->centerTileX()) * tile_w + origin_x;
-  //   const double y = -(tile.y() - loader_->centerTileY()) * tile_h + origin_y;
-  //   //  don't re-use any ids
-  //   const std::string name_suffix =
-  //       std::to_string(tile.x()) + "_" + std::to_string(tile.y()) + "_" +
-  //       std::to_string(map_id_) + "_" + std::to_string(scene_id_);
+    // determine location of this tile, flipping y in the process
+    const double x = (tile.x() - loader_->centerTileX()) * tile_w + origin_x;
+    const double y = -(tile.y() - loader_->centerTileY()) * tile_h + origin_y;
+    //  don't re-use any ids
+    const std::string name_suffix =
+        std::to_string(tile.x()) + "_" + std::to_string(tile.y()) + "_" +
+        std::to_string(map_id_) + "_" + std::to_string(scene_id_);
 
-  //   if (tile.hasImage()) {
-  //     //  one material per texture
-  //     Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().create(
-  //         "material_" + name_suffix,
-  //         Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-  //     material->setReceiveShadows(false);
-  //     material->getTechnique(0)->setLightingEnabled(false);
-  //     material->setDepthBias(-16.0f, 0.0f);
-  //     material->setCullingMode(Ogre::CULL_NONE);
-  //     material->setDepthWriteEnabled(false);
+    if (tile.hasImage()) {
+      //  one material per texture
+      Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().create(
+          "material_" + name_suffix,
+          Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+      material->setReceiveShadows(false);
+      material->getTechnique(0)->setLightingEnabled(false);
+      material->setDepthBias(-16.0f, 0.0f);
+      material->setCullingMode(Ogre::CULL_NONE);
+      material->setDepthWriteEnabled(false);
 
-  //     //  create textureing unit
-  //     Ogre::Pass *pass = material->getTechnique(0)->getPass(0);
-  //     Ogre::TextureUnitState *tex_unit = nullptr;
-  //     if (pass->getNumTextureUnitStates() > 0) {
-  //       tex_unit = pass->getTextureUnitState(0);
-  //     } else {
-  //       tex_unit = pass->createTextureUnitState();
-  //     }
+      //  create textureing unit
+      Ogre::Pass *pass = material->getTechnique(0)->getPass(0);
+      Ogre::TextureUnitState *tex_unit = nullptr;
+      if (pass->getNumTextureUnitStates() > 0) {
+        tex_unit = pass->getTextureUnitState(0);
+      } else {
+        tex_unit = pass->createTextureUnitState();
+      }
 
-  //     //  only add if we have a texture for it
-  //     Ogre::TexturePtr texture =
-  //         textureFromImage(tile.image(), "texture_" + name_suffix);
+      //  only add if we have a texture for it
+      Ogre::TexturePtr texture =
+          textureFromImage(tile.image(), "texture_" + name_suffix);
 
-  //     tex_unit->setTextureName(texture->getName());
-  //     tex_unit->setTextureFiltering(Ogre::TFO_BILINEAR);
+      tex_unit->setTextureName(texture->getName());
+      tex_unit->setTextureFiltering(Ogre::TFO_BILINEAR);
 
-  //     //  create an object
-  //     const std::string obj_name = "object_" + name_suffix;
-  //     Ogre::ManualObject *obj = scene_manager_->createManualObject(obj_name);
-  //     scene_node_->attachObject(obj);
+      //  create an object
+      const std::string obj_name = "object_" + name_suffix;
+      Ogre::ManualObject *obj = scene_manager_->createManualObject(obj_name);
+      scene_node_->attachObject(obj);
 
-  //     //  configure depth & alpha properties
-  //     if (alpha_ >= 0.9998) {
-  //       material->setDepthWriteEnabled(!draw_under_);
-  //       material->setSceneBlending(Ogre::SBT_REPLACE);
-  //     } else {
-  //       material->setSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA);
-  //       material->setDepthWriteEnabled(false);
-  //     }
+      //  configure depth & alpha properties
+      if (alpha_ >= 0.9998) {
+        material->setDepthWriteEnabled(!draw_under_);
+        material->setSceneBlending(Ogre::SBT_REPLACE);
+      } else {
+        material->setSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA);
+        material->setDepthWriteEnabled(false);
+      }
 
-  //     if (draw_under_) {
-  //       obj->setRenderQueueGroup(Ogre::RENDER_QUEUE_3);
-  //     } else {
-  //       obj->setRenderQueueGroup(Ogre::RENDER_QUEUE_MAIN);
-  //     }
+      if (draw_under_) {
+        obj->setRenderQueueGroup(Ogre::RENDER_QUEUE_3);
+      } else {
+        obj->setRenderQueueGroup(Ogre::RENDER_QUEUE_MAIN);
+      }
 
-  //     tex_unit->setAlphaOperation(Ogre::LBX_SOURCE1, Ogre::LBS_MANUAL,
-  //                                 Ogre::LBS_CURRENT, alpha_);
+      tex_unit->setAlphaOperation(Ogre::LBX_SOURCE1, Ogre::LBS_MANUAL,
+                                  Ogre::LBS_CURRENT, alpha_);
 
-  //     //  create a quad for this tile
-  //     obj->begin(material->getName(), Ogre::RenderOperation::OT_TRIANGLE_LIST);
-
-
-  //     // es werden 2 Dreiecke aneinandergefügt!!!
-  //     //  bottom left
-
-  //     std::cout<<"x_pos of tile: "<<x<<"  y_pos of tile: "<<y<<" name_suffix: "<<name_suffix<<std::endl;
-
-  //     obj->position(x, y, 0.0f);
-  //     obj->textureCoord(0.0f, 0.0f);
-  //     obj->normal(0.0f, 0.0f, 1.0f);
-
-  //     // top right
-  //     obj->position(x + tile_w, y + tile_h, 0.0f);
-  //     obj->textureCoord(1.0f, 1.0f);
-  //     obj->normal(0.0f, 0.0f, 1.0f);
-
-  //     // top left
-  //     obj->position(x, y + tile_h, 0.0f);
-  //     obj->textureCoord(0.0f, 1.0f);
-  //     obj->normal(0.0f, 0.0f, 1.0f);
+      //  create a quad for this tile
+      obj->begin(material->getName(), Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
 
-  //     // zweites Dreieck:
-  //     //  bottom left
-  //     obj->position(x, y, 0.0f);
-  //     obj->textureCoord(0.0f, 0.0f);
-  //     obj->normal(0.0f, 0.0f, 1.0f);
+      // es werden 2 Dreiecke aneinandergefügt!!!
+      //  bottom left
 
-  //     // bottom right
-  //     obj->position(x + tile_w, y, 0.0f);
-  //     obj->textureCoord(1.0f, 0.0f);
-  //     obj->normal(0.0f, 0.0f, 1.0f);
+      std::cout<<"x_pos of tile: "<<x<<"  y_pos of tile: "<<y<<" name_suffix: "<<name_suffix<<std::endl;
 
-  //     // top right
-  //     obj->position(x + tile_w, y + tile_h, 0.0f);
-  //     obj->textureCoord(1.0f, 1.0f);
-  //     obj->normal(0.0f, 0.0f, 1.0f);
+      obj->position(x, y, 0.0f);
+      obj->textureCoord(0.0f, 0.0f);
+      obj->normal(0.0f, 0.0f, 1.0f);
 
-  //     obj->end();
+      // top right
+      obj->position(x + tile_w, y + tile_h, 0.0f);
+      obj->textureCoord(1.0f, 1.0f);
+      obj->normal(0.0f, 0.0f, 1.0f);
 
-  //     if (draw_under_property_->getValue().toBool()) {
-  //       //  render under everything else
-  //       obj->setRenderQueueGroup(Ogre::RENDER_QUEUE_3);
-  //     }
+      // top left
+      obj->position(x, y + tile_h, 0.0f);
+      obj->textureCoord(0.0f, 1.0f);
+      obj->normal(0.0f, 0.0f, 1.0f);
 
-  //     MapObject object;
-  //     object.object = obj;
-  //     object.texture = texture;
-  //     object.material = material;
-  //     objects_.push_back(object);
-  //   }
-  // }
-  // scene_id_++;
+
+      // zweites Dreieck:
+      //  bottom left
+      obj->position(x, y, 0.0f);
+      obj->textureCoord(0.0f, 0.0f);
+      obj->normal(0.0f, 0.0f, 1.0f);
+
+      // bottom right
+      obj->position(x + tile_w, y, 0.0f);
+      obj->textureCoord(1.0f, 0.0f);
+      obj->normal(0.0f, 0.0f, 1.0f);
+
+      // top right
+      obj->position(x + tile_w, y + tile_h, 0.0f);
+      obj->textureCoord(1.0f, 1.0f);
+      obj->normal(0.0f, 0.0f, 1.0f);
+
+      obj->end();
+
+      if (draw_under_property_->getValue().toBool()) {
+        //  render under everything else
+        obj->setRenderQueueGroup(Ogre::RENDER_QUEUE_3);
+      }
+
+      MapObject object;
+      object.object = obj;
+      object.texture = texture;
+      object.material = material;
+      objects_.push_back(object);
+    }
+  }
+  scene_id_++;
 }
 
 void LoadImages::initiatedRequest(QNetworkRequest request) {
@@ -792,7 +873,7 @@ void LoadImages::fixedFrameChanged() { transformAerialMap(); }
 void LoadImages::reset() {
   Display::reset();
   //  unsub,clear,resub
-  //updateTopic();
+  updateTopic();
 }
 
 } // namespace rviz
