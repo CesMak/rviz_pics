@@ -45,7 +45,8 @@ void TileLoader::start() {
   std::cout << "Number of Images to add: " << image_names.length() << std::endl;
 
   // /home/markus/ros_space/alfons_ws/src/alfons/rviz_pics/storage_pics/5484377250584657929/x0_y0_z0_0_0_0_0.jpg
-  for (int i = 0; i < image_names.length(); i++) {
+  // TODO: image_names.length()
+  for (int i = 0; i < 1; i++) {
     const QString full_path = my_path + QDir::separator() + image_names[i];
     QStringList list = image_names[i].split('_');
 

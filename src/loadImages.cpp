@@ -192,8 +192,6 @@ void LoadImages::assembleScene() {
     double y = tile.posY();
     double z = tile.posZ();
 
-    std::cout<<z<<std::endl;
-
     const std::string name_suffix =
         std::to_string(tile.posX()) + "_" + std::to_string(tile.posY()) + "_" +  std::to_string(tile.posZ()) 
          + "_" +  std::to_string(tile.qx()) + "_" +  std::to_string(tile.qy()) + "_" +  std::to_string(tile.qz())
@@ -230,11 +228,8 @@ void LoadImages::assembleScene() {
       const std::string obj_name = "object_" + name_suffix;
       Ogre::ManualObject *obj = scene_manager_->createManualObject(obj_name);
 
-      Ogre::SceneNode* my_scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode();
+      Ogre::SceneNode* my_scene_node_ = scene_manager_->getRootSceneNode()->createChildSceneNode((Ogre::Vector3(0,0,0)));
       my_scene_node_->attachObject(obj);
-
-      // TODO:
-      //scene_node_->setOrientation(Ogre::Quaternion::IDENTITY);
 
       //  configure depth & alpha properties
       if (alpha_ >= 0.9998) {
@@ -268,16 +263,11 @@ int offsetx = x; // wenn null dann auf halber width
 int offsety = y-height/2; // wenn null dann am linken rand!
 int offsetz = z; // höhe in m
 Ogre::Vector3 vec(width/2, 0, 0);  // width/2 so lassen! verzerrung mit z etc. einstellen.
-Ogre::Quaternion quat;
-quat.x = tile.qx();
-quat.y = tile.qy();
-quat.z = tile.qz();
-quat.w = tile.qw();
+
 //quat.FromAngleAxis(Ogre::Degree(90), Ogre::Vector3::UNIT_Y);  // drehen um Y klappt, um X passeiert nix um Z klappt auch nicht!
-// quat.w = 0.707107;
-// quat.y = 0.707107;
-//vec = quat * vec; 
-std::cout<<quat<<std::endl;
+//  quat.w = 0.707107;
+//  quat.y = 0.707107;
+//vec = quat * vec;
 
   obj->position(-vec.x+offsetx, height+offsety, -vec.z+offsetz);
   obj->textureCoord(0, 0);
@@ -292,9 +282,14 @@ std::cout<<quat<<std::endl;
    obj->triangle(0,  2,  3); // alternatively use obj->quad(....)
    obj->end();
 
-  // std::cout<<"before set orientation   set to: "<<quat<<std::endl;
-   my_scene_node_->setOrientation(quat);
-  // std::cout<<"after set orientation"<<std::endl;
+      Ogre::Quaternion quat;
+      quat.x = tile.qx();
+      quat.y = tile.qy();
+      quat.z = tile.qz();
+      quat.w = tile.qw();
+      quat.w = 0.707107;
+      quat.x = 0.707107;
+      my_scene_node_->setOrientation(quat);
 
       if (draw_under_property_->getValue().toBool()) {
         //  render under everything else
@@ -306,18 +301,10 @@ std::cout<<quat<<std::endl;
       object.object = obj;
       object.texture = texture;
       object.material = material;
-      objects_.push_back(object);
+     // objects_.push_back(object); // is actually not necessary!
     }  // end if tile has img
  }
- //scene_node_ = my_scene_node_;
  scene_id_++;
-
-// Ogre::Quaternion quat;
-// quat.x = 1;
-// quat.y = 0;
-// quat.z = 0;
-// quat.w = 0;
-//     scene_node_->setOrientation(quat);
 }
 
 void LoadImages::receivedImage(QNetworkRequest request) {
