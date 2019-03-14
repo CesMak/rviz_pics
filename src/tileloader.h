@@ -28,13 +28,13 @@ public:
       : pos_x_(x), pos_y_(y), pos_z_(z), qx_(qx), qy_(qy), qz_(qz), qw_(qw), image_(image) {}
 
     /// X position of tile
-    int posX() const { return pos_x_; }
+    double posX() const { return pos_x_; }
 
     /// Y 
-    int posY() const { return pos_y_; }
+    double posY() const { return pos_y_; }
       
     /// Z 
-    int posZ() const { return pos_z_; }
+    double posZ() const { return pos_z_; }
 
     /// quaternion x 
     double qx() const { return qx_; }

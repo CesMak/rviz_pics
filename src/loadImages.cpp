@@ -39,6 +39,7 @@
 
 
 // this method is required!
+// just works for imgs of size 256x256
 Ogre::TexturePtr textureFromImage(const QImage &image,
                                   const std::string &name) {
   //  convert to 24bit rgb
@@ -87,8 +88,17 @@ LoadImages::LoadImages()
 
   //  output, resolution of the map in meters/pixel
   resolution_property_ = new FloatProperty(
-      "Resolution", 0, "Resolution of the map. (Read only)", this);
-  resolution_property_->setReadOnly(true);
+      "Resolution", 0, "Resolution of the map. Scale the images map meters to pixel between 0 and 1", this, SLOT(updateResolution()));
+  resolution_property_->setReadOnly(false);
+  resolution_property_->setMin(0);
+  resolution_property_->setMax(1);
+  resolution_property_->setShouldBeSaved(true);
+
+  reload_property_ =
+      new Property("Force reload", false,
+                   "Reload images from folder!",
+                   this, SLOT(updateReload()));
+  reload_property_->setShouldBeSaved(true);
 
     loadImagery();
 }
@@ -98,11 +108,24 @@ LoadImages::~LoadImages() {
   clear();
 }
 
+void LoadImages::updateReload() {
+  loader_->start();
+  ROS_INFO("reload pressed TODO change to autoreoload enable!");
+}
+
 void LoadImages::updateAlpha() {
   alpha_ = alpha_property_->getFloat();
   dirty_ = true;
   ROS_INFO("Changing alpha to %f", alpha_);
 }
+
+void LoadImages::updateResolution() {
+  resolution_ = resolution_property_->getFloat();
+  dirty_ = true; //  force update
+  ROS_INFO("Changing resolution_property_ to %f", resolution_);
+}
+
+
 
 void LoadImages::updateDrawUnder() {
   /// @todo: figure out why this property only applies to some objects
@@ -123,7 +146,7 @@ void LoadImages::clear() {
 void LoadImages::clearGeometry() {
   for (MapObject &obj : objects_) {
     //  destroy object
-    scene_node_->detachObject(obj.object);
+    //scene_node_->detachObject(obj.object);
     scene_manager_->destroyManualObject(obj.object);
     //  destroy texture
     if (!obj.texture.isNull()) {
@@ -183,10 +206,10 @@ void LoadImages::assembleScene() {
  for (const TileLoader::MapTile &tile : loader_->Mytiles()) {
   if (tile.hasImage()) {
 
-    const int w = tile.image().width();
-    const int h = tile.image().height();
-    const double tile_w = w * loader_->resolution();
-    const double tile_h = h * loader_->resolution();
+    const int w = tile.image().width();  // /2 dass in mitte sitzt!
+    const int h = tile.image().height(); // /2 dass in mitte sitzt
+    const double tile_w = w * resolution_;
+    const double tile_h = h * resolution_;
 
     double x = tile.posX();
     double y = tile.posY();
@@ -249,38 +272,51 @@ void LoadImages::assembleScene() {
       tex_unit->setAlphaOperation(Ogre::LBX_SOURCE1, Ogre::LBS_MANUAL,
                                   Ogre::LBS_CURRENT, alpha_);
 
-      //  create a quad for this tile
-      obj->begin(material->getName(), Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
 // see: http://wiki.ogre3d.org/Intermediate+Tutorial+5
 // http://wiki.ogre3d.org/Quaternion+and+Rotation+Primer (table of quaternions)
-// groeße des Bildes in m:
-const float width = tile_w;
-const float height = tile_h;
 
-// position:
-int offsetx = x; // wenn null dann auf halber width
-int offsety = y-height/2; // wenn null dann am linken rand!
-int offsetz = z; // höhe in m
-Ogre::Vector3 vec(width/2, 0, 0);  // width/2 so lassen! verzerrung mit z etc. einstellen.
 
-//quat.FromAngleAxis(Ogre::Degree(90), Ogre::Vector3::UNIT_Y);  // drehen um Y klappt, um X passeiert nix um Z klappt auch nicht!
-//  quat.w = 0.707107;
-//  quat.y = 0.707107;
-//vec = quat * vec;
+      //  create a quad for this tile
+      obj->begin(material->getName(), Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
-  obj->position(-vec.x+offsetx, height+offsety, -vec.z+offsetz);
-  obj->textureCoord(0, 0);
-  obj->position(vec.x+offsetx, height+offsety, vec.z+offsetz);
-  obj->textureCoord(1, 0);
-  obj->position(-vec.x+offsetx, offsety, -vec.z+offsetz);
-  obj->textureCoord(0, 1);
-  obj->position(vec.x+offsetx, offsety, vec.z+offsetz);
-  obj->textureCoord(1, 1);
+      //  bottom left
+      obj->position(0, 0, 0);
+      obj->textureCoord(0.0f, 0.0f);
+      obj->normal(0.0f, 0.0f, 1.0f);
 
-   obj->triangle(0,  3,  1); // dreiecke in sich verdreht wenn ohne offset!
-   obj->triangle(0,  2,  3); // alternatively use obj->quad(....)
+      // top right
+      obj->position(0 + tile_w, 0 + tile_h, 0);
+      obj->textureCoord(1.0f, 1.0f);
+      obj->normal(0.0f, 0.0f, 1.0f);
+
+      // top left
+      obj->position(0, 0 + tile_h, -0);
+      obj->textureCoord(0.0f, 1.0f);
+      obj->normal(0.0f, 0.0f, 1.0f);
+
+      //  bottom left
+      obj->position(0, 0, 0);
+      obj->textureCoord(0.0f, 0.0f);
+      obj->normal(0.0f, 0.0f, 1.0f);
+
+      // bottom right
+      obj->position(0+ tile_w, 0, 0);
+      obj->textureCoord(1.0f, 0.0f);
+      obj->normal(0.0f, 0.0f, 1.0f);
+
+      // top right
+      obj->position(0 + tile_w, 0 + tile_h, 0);
+      obj->textureCoord(1.0f, 1.0f);
+      obj->normal(0.0f, 0.0f, 1.0f);
+
    obj->end();
+
+      std::cout<<x<<" "<<y<<" "<<z<<std::endl;
+      // not exactly shure how to remove the offset! TODO TODO
+      // what works for some rotations:       Ogre::Vector3 position_s(x+tile_w/2, y, z-tile_w/2);  
+      Ogre::Vector3 position_s(x, y, z);  
+      my_scene_node_->setPosition(position_s);
 
       Ogre::Quaternion quat;
       quat.x = tile.qx();
@@ -289,6 +325,7 @@ Ogre::Vector3 vec(width/2, 0, 0);  // width/2 so lassen! verzerrung mit z etc. e
       quat.w = tile.qw();
       std::cout<<"set quat to: "<<quat<<std::endl;
       my_scene_node_->setOrientation(quat);
+
 
       if (draw_under_property_->getValue().toBool()) {
         //  render under everything else
@@ -300,7 +337,7 @@ Ogre::Vector3 vec(width/2, 0, 0);  // width/2 so lassen! verzerrung mit z etc. e
       object.object = obj;
       object.texture = texture;
       object.material = material;
-     // objects_.push_back(object); // is actually not necessary!
+      objects_.push_back(object); // important for deleting when updating!
     }  // end if tile has img
  }
  scene_id_++;
@@ -314,10 +351,6 @@ void LoadImages::finishedLoading() {
   ROS_INFO("Finished loading all tiles.");
   dirty_ = true;
   setStatus(StatusProperty::Ok, "Message", "Loaded all tiles.");
-  //  set property for resolution display
-  if (loader_) {
-    resolution_property_->setValue(loader_->resolution());
-  }
 }
 
 void LoadImages::errorOcurred(QString description) {

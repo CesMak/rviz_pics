@@ -81,7 +81,7 @@ void TileLoader::start() {
   checkIfLoadingComplete();
 }
 
-double TileLoader::resolution() const { return 0.4; }
+double TileLoader::resolution() const { return 0.026458333; } // 0.00026458333 // um faktor 1000 groeßer
 
 bool TileLoader::MapTile::hasImage() const { return !image_.isNull(); }
 

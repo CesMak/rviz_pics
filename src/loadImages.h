@@ -62,6 +62,8 @@ public:
 protected Q_SLOTS:
   void updateAlpha();
   void updateDrawUnder();
+  void updateResolution();
+  void updateReload();
 
   //Additions:
 
@@ -94,8 +96,10 @@ protected:
   FloatProperty *resolution_property_;
   FloatProperty *alpha_property_;
   Property *draw_under_property_;
+  Property *reload_property_;
 
   float alpha_;
+  float resolution_;
   bool draw_under_;
 
   //  tile management
