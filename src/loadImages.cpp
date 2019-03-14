@@ -287,8 +287,7 @@ Ogre::Vector3 vec(width/2, 0, 0);  // width/2 so lassen! verzerrung mit z etc. e
       quat.y = tile.qy();
       quat.z = tile.qz();
       quat.w = tile.qw();
-      quat.w = 0.707107;
-      quat.x = 0.707107;
+      std::cout<<"set quat to: "<<quat<<std::endl;
       my_scene_node_->setOrientation(quat);
 
       if (draw_under_property_->getValue().toBool()) {

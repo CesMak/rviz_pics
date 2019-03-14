@@ -46,7 +46,7 @@ public:
     double qz() const { return qz_; }
 
     /// quaternion
-    double qw() const { return qz_; }
+    double qw() const { return qw_; }
 
     /// Has a tile successfully loaded?
     bool hasImage() const;
