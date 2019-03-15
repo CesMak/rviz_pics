@@ -54,12 +54,12 @@ Visualization Manager:
       Queue Size: 100
       Value: true
     - Alpha: 1
+      Auto reload: false
       Class: rviz_plugins/LoadImages
       Draw Behind: false
       Enabled: true
-      Force reload: false
       Name: LoadImages
-      Resolution: 0.00999999978
+      Resolution: 0.100000001
       Value: true
   Enabled: true
   Global Options:
@@ -101,10 +101,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.23814851
+      Pitch: 0.288148552
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.90364075
+      Yaw: 1.88364089
     Saved: ~
 Window Geometry:
   Displays:

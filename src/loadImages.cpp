@@ -46,7 +46,7 @@ Ogre::TexturePtr textureFromImage(const QImage &image,
   //  convert to 24bit rgb
   QImage converted = image.convertToFormat(QImage::Format_RGB888).mirrored();
  
-  int size_of_stream = (converted.width()*converted.height()*3);
+  int size_of_stream = (image.width()*image.height()*3);
 
   //  create texture
   Ogre::TexturePtr texture;
@@ -65,7 +65,7 @@ Ogre::TexturePtr textureFromImage(const QImage &image,
   Ogre::TextureManager &texture_manager = Ogre::TextureManager::getSingleton();
   //  swap byte order when going from QImage to Ogre
   texture = texture_manager.loadRawData(name, res_group, data_stream,
-                                        converted.width(), converted.height(),
+                                        image.width(), image.height(),
                                         Ogre::PF_B8G8R8, Ogre::TEX_TYPE_2D, 0);
 
 
@@ -313,6 +313,8 @@ void LoadImages::assembleScene() {
 // only works for a quad!!! not for a rectangle :) 
 
       //  create a quad for this tile
+      // Very important: the size of the images should be square e.g. 330x330 and end with a 0
+      // otherwise there are huge problems!
       obj->begin(material->getName(), Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
       //  bottom left
@@ -344,6 +346,19 @@ void LoadImages::assembleScene() {
       obj->position(0 + tile_w, 0 + tile_h, 0);
       obj->textureCoord(1.0f, 1.0f);
       obj->normal(0.0f, 0.0f, 1.0f);
+
+// do not use this code pics are wrongly aligned! (falsch rum!)
+//   obj->position(-tile_w/2, tile_h, 0);
+//   obj->textureCoord(0, 0);
+//   obj->position(tile_w/2, tile_h, 0);
+//   obj->textureCoord(1, 0);
+//   obj->position(-tile_w/2, 0, 0);
+//   obj->textureCoord(0, 1);
+//   obj->position(tile_w/2, 0, 0);
+//   obj->textureCoord(1, 1);
+//   int offset = 0;
+//  obj->triangle(offset + 0, offset + 3, offset + 1);
+//   obj->triangle(offset + 0, offset + 2, offset + 3);
 
    obj->end();
 
