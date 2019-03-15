@@ -21,6 +21,7 @@
 #include <OGRE/OgreTextureManager.h>
 #include <OGRE/OgreImageCodec.h>
 #include <OGRE/OgreVector3.h>
+#include <QTimer>
 
 #include "rviz/frame_manager.h"
 #include "rviz/ogre_helpers/grid.h"
@@ -44,12 +45,20 @@ Ogre::TexturePtr textureFromImage(const QImage &image,
                                   const std::string &name) {
   //  convert to 24bit rgb
   QImage converted = image.convertToFormat(QImage::Format_RGB888).mirrored();
+ 
+  int size_of_stream = (converted.width()*converted.height()*3);
 
   //  create texture
   Ogre::TexturePtr texture;
   Ogre::DataStreamPtr data_stream;
-  data_stream.bind(new Ogre::MemoryDataStream((void *)converted.constBits(),
-                                              converted.byteCount()));
+   data_stream.bind(new Ogre::MemoryDataStream((void *)converted.constBits(),
+                                               size_of_stream));
+  std::cout<<" data_stream Size: "<<data_stream->size()<<"conv wi: "<<converted.width()<<" conv hi"<< converted.height()<<"  img wi:"<< image.width()<<" img_h: "<<image.height()<<std::endl;
+ // Size: 196608conv wi: 256 conv hi256  img wi:256 img_h: 256  -> works
+ // Size: 119660conv wi: 257 conv hi155  img wi:257 img_h: 155  -> fails with above mentioned error
+
+  bool stream_size = (data_stream->size()) == (converted.width()*converted.height()*3);  
+  std::cout<<stream_size<<" "<<data_stream->size()<<" "<<(converted.width()*converted.height()*3)<<std::endl;
 
   const Ogre::String res_group =
       Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME;
@@ -58,6 +67,19 @@ Ogre::TexturePtr textureFromImage(const QImage &image,
   texture = texture_manager.loadRawData(name, res_group, data_stream,
                                         converted.width(), converted.height(),
                                         Ogre::PF_B8G8R8, Ogre::TEX_TYPE_2D, 0);
+
+
+// virtual TexturePtr Ogre::TextureManager::loadRawData 	( 	const String &  	name,
+// 		const String &  	group,
+// 		DataStreamPtr &  	stream,
+// 		ushort  	uWidth,
+// 		ushort  	uHeight,
+// 		PixelFormat  	format,
+// 		TextureType  	texType = TEX_TYPE_2D,
+// 		int  	iNumMipmaps = MIP_DEFAULT,
+// 		Real  	gamma = 1.0f,
+// 		bool  	hwGammaCorrection = false 
+// 	) 	
   return texture;
 }
 
@@ -95,10 +117,16 @@ LoadImages::LoadImages()
   resolution_property_->setShouldBeSaved(true);
 
   reload_property_ =
-      new Property("Force reload", false,
+      new Property("Auto reload", false,
                    "Reload images from folder!",
-                   this, SLOT(updateReload()));
+                   this,SLOT(changeAutoReload()));
   reload_property_->setShouldBeSaved(true);
+  auto_reload_ = reload_property_->getValue().toBool();
+
+  // Timer for callback updates:
+  timer_ = new QTimer(this);
+  connect(timer_, SIGNAL(timeout()), this, SLOT(updateReload()));
+  timer_->start(1000); //1sec time specified in ms
 
     loadImagery();
 }
@@ -109,8 +137,15 @@ LoadImages::~LoadImages() {
 }
 
 void LoadImages::updateReload() {
-  loader_->start();
-  ROS_INFO("reload pressed TODO change to autoreoload enable!");
+  if(auto_reload_)
+  {
+    loader_->start();
+    ROS_INFO("reload pressed TODO change to autoreoload enable!");
+  }
+}
+
+void LoadImages::changeAutoReload() {
+  auto_reload_ = reload_property_->getValue().toBool();
 }
 
 void LoadImages::updateAlpha() {
@@ -275,7 +310,7 @@ void LoadImages::assembleScene() {
 
 // see: http://wiki.ogre3d.org/Intermediate+Tutorial+5
 // http://wiki.ogre3d.org/Quaternion+and+Rotation+Primer (table of quaternions)
-
+// only works for a quad!!! not for a rectangle :) 
 
       //  create a quad for this tile
       obj->begin(material->getName(), Ogre::RenderOperation::OT_TRIANGLE_LIST);

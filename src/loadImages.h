@@ -64,7 +64,7 @@ protected Q_SLOTS:
   void updateDrawUnder();
   void updateResolution();
   void updateReload();
-
+  void changeAutoReload();
   //Additions:
 
   //  slots for TileLoader messages
@@ -97,10 +97,12 @@ protected:
   FloatProperty *alpha_property_;
   Property *draw_under_property_;
   Property *reload_property_;
+  QTimer *timer_;
 
   float alpha_;
   float resolution_;
   bool draw_under_;
+  bool auto_reload_;
 
   //  tile management
   bool dirty_;
