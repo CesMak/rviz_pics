@@ -1,3 +1,10 @@
+ /**************************************************************************//**
+   @author  Markus Lamprecht
+   @date    March 2019
+   @link    www.simact.de/about_me
+   @Copyright (c) 2019 Markus Lamprecht. BSD
+ *****************************************************************************/
+
 /* @info: Links:
  * rviz plugin create: http://docs.ros.org/kinetic/api/rviz_plugin_tutorials/html/display_plugin_tutorial.html
  *

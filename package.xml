@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <package>
   <name>rviz_pics</name>
-  <version>0.0.2</version>
-  <description>Display satellite map tiles in RViz</description>
-  <author>Gareth Cross</author>
-  <maintainer email="gcross.code@icloud.com">gcross</maintainer>
-  <license>Apache 2</license>
+  <version>1.0</version>
+  <description>Display satellite map tiles in Rviz</description>
+  <author>Markus Lamprecht</author>
+  <maintainer email="markuslamprecht@live.de">Markus Lamprecht</maintainer>
+  <license>BSD</license>
 
   <buildtool_depend>catkin</buildtool_depend>
 

@@ -1,35 +1,68 @@
-## rviz_maps
+# rviz_pics
 
-This package is an adapted version of [rviz_satellite](https://github.com/gareth-cross/rviz_satellite). It extends this version and is able to plot marker points of incoming gps positions. This package is basically a rviz plugin
+## Overview
 
-![demo_pic](https://github.com/CesMak/rviz_maps/blob/master/data/demo.png)
+This package is a rviz plugin that can be used to load images with a certain position and orientation.
 
-Load Tiles from tile server around a latitude and longitude coordinate and plot gps points as markers of message Type: sensor_msgs/NavSatFix to a topic with name /gps/fix.
+**Author: Markus Lamprecht<br />
+Maintainer: Markus Lamprecht, 2f4yor@gmail.com<br />**
 
-## Demo
+<img alt="alfons" src="data/rviz_pics.png" width="700">
+
+## Installation
+
+### Dependencies
+
+This software is built on the Robotic Operating System ([ROS]), which needs to be [installed](http://wiki.ros.org) first. Additionally, this package depends on following software:
+
+- (todo)
+
+### Building
+
+In order to install this package, clone the latest version from this repository into your catkin workspace and compile the package using [catkin_tools](https://catkin-tools.readthedocs.io/en/latest/)
 
 ``` 
-roslaunch rviz_maps demo.launch
+mkdir -p catkin_ws/src
+cd catkin_ws/src/
+git clone git@github.com:CesMak/rviz_pics.git 
+cd ..
+catkin init 
+catkin build
+source devel/setup.bash
+```
+
+## Basic Usage
+
+- put all the pic's you want to load in the folder: ```map``` 
+- the pics should be named as e.g.
+
+``` 
+-0.0432_-0.5083_0.1885_-0.0392_-0.7074_-0.7025_-0.0678_id:1.jpg
+x_y_z_qx_qy_qz_qw_(...).jpg  # x, y, z position in m
 ``` 
 
-## Errors:
+## Main Launch file
 
 ``` 
-Errors     << rviz_maps:make /home/markus/ros_space/alfons_ws/logs/rviz_maps/build.make.000.log
-In file included from /home/markus/ros_space/alfons_ws/src/alfons/rviz_maps/src/aerialmap_display.cpp:38:0:
-/home/markus/ros_space/alfons_ws/src/alfons/rviz_maps/src/aerialmap_display.h:20:53: fatal error: rviz_maps/rviz_scale.h: No such file or directory
-compilation terminated.
+roslaunch rviz_pics demo.launch
 ``` 
-
-**Solution**
-
-* source ws
-* try rosmsg show rviz_maps/rviz_scale.msg
-* roscd rviz_maps
-* catkin build --this
-* catkin build
 
 ## License BSD
 If you want to use this package please contact: [me](https://simact.de/about_me).
 
-Please also respect the License of [rviz_satellite](https://github.com/gareth-cross/rviz_satellite)
+
+## TODO's
+
+- See answers of my questions (mlacht) at ORGE forum.
+- Make sure that rectangle pics can also be loaded.
+
+
+[ROS]: http://www.ros.org
+[rviz]: http://wiki.ros.org/rviz
+[grid_map_msg/GridMap]: https://github.com/anybotics/grid_map/blob/master/grid_map_msg/msg/GridMap.msg
+[sensor_msgs/PointCloud2]: http://docs.ros.org/api/sensor_msgs/html/msg/PointCloud2.html
+[geometry_msgs/PoseWithCovarianceStamped]: http://docs.ros.org/api/geometry_msgs/html/msg/PoseWithCovarianceStamped.html
+[tf/tfMessage]: http://docs.ros.org/kinetic/api/tf/html/msg/tfMessage.html
+[std_srvs/Empty]: http://docs.ros.org/api/std_srvs/html/srv/Empty.html
+[grid_map_msg/GetGridMap]: https://github.com/anybotics/grid_map/blob/master/grid_map_msg/srv/GetGridMap.srv
+[grid_map_msgs/ProcessFile]: https://github.com/ANYbotics/grid_map/blob/master/grid_map_msgs/srv/ProcessFile.srv
