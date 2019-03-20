@@ -17,7 +17,7 @@
 #include <ros/time.h>
 #include <rviz/display.h>
 #include <sensor_msgs/NavSatFix.h>
-#include <rviz_pics/rviz_scale.h> // scaling message
+//#include <rviz_pics/rviz_scale.h> // scaling message
 
 #include <OGRE/OgreTexture.h>
 #include <OGRE/OgreMaterial.h>

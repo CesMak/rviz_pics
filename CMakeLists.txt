@@ -53,22 +53,22 @@ include_directories(
     ${catkin_INCLUDE_DIRS}
     )
 
-add_message_files(
-    FILES
-    rviz_scale.msg
-    )
+#add_message_files(
+#    FILES
+#    rviz_scale.msg
+#    )
 
 # Generate added messages and services with any dependencies listed here
-message("messages are generated in new terminal alwayse source before rosmsg show ... or rostopic echo ... ")
-message("rviz_scale message is build")
-generate_messages(
-    DEPENDENCIES
-    #add dependencies here
-    std_msgs
-    geometry_msgs
-    sensor_msgs
-    nav_msgs
-    )
+#message("messages are generated in new terminal alwayse source before rosmsg show ... or rostopic echo ... ")
+#message("rviz_scale message is build")
+# generate_messages(
+#     DEPENDENCIES
+#     #add dependencies here
+#     std_msgs
+#     geometry_msgs
+#     sensor_msgs
+#     nav_msgs
+#     )
 
 catkin_package(CATKIN_DEPENDS nav_msgs sensor_msgs )#message_runtime)
 
@@ -146,6 +146,6 @@ install(FILES plugin_description.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINAT
 
 # von Markus:
 #requires: sudo apt-get install ros-kinetic-geodesy
-add_executable(plot_markers src/plot_markers.cpp)
-add_dependencies(plot_markers ${catkin_EXPORTED_TARGETS})
-target_link_libraries(plot_markers  ${catkin_LIBRARIES})
+#add_executable(plot_markers src/plot_markers.cpp)
+#add_dependencies(plot_markers ${catkin_EXPORTED_TARGETS})
+#target_link_libraries(plot_markers  ${catkin_LIBRARIES})
