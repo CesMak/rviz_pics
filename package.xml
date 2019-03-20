@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>rviz_pics</name>
-  <version>1.0</version>
+  <version>0.0.0</version>
   <description>Display satellite map tiles in Rviz</description>
   <author>Markus Lamprecht</author>
   <maintainer email="markuslamprecht@live.de">Markus Lamprecht</maintainer>
